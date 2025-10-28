@@ -22,7 +22,6 @@ class BudgetsScreen extends ConsumerWidget {
       ),
       body: budgetsAsync.when(
         data: (budgets) {
-          print('Budgets loaded: ${budgets.length}'); // Debug
           if (budgets.isEmpty) {
             return Center(
               child: Column(
@@ -174,19 +173,13 @@ class BudgetsScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () {
-          print('Budgets loading...'); // Debug
-          return const Center(child: CircularProgressIndicator());
-        },
-        error: (error, stack) {
-          print('Budgets error: $error'); // Debug
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('Error: $error'),
-            ),
-          );
-        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('Error: $error'),
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

@@ -13,7 +13,15 @@ final budgetsByMonthProvider = FutureProvider.family<List<Budget>, DateTime>((
   date,
 ) async {
   final storageService = ref.read(storageServiceProvider);
-  return storageService.getBudgetsForMonth(date.month, date.year);
+  try {
+    final budgets = await storageService.getBudgetsForMonth(
+      date.month,
+      date.year,
+    );
+    return budgets;
+  } catch (e) {
+    return <Budget>[]; // Return empty list on error
+  }
 });
 
 final budgetStatusProvider =
