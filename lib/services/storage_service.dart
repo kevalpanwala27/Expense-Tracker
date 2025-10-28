@@ -7,6 +7,8 @@ class StorageService {
   static const String budgetBoxName = 'budgets';
 
   static final StorageService _instance = StorageService._internal();
+  static bool _isInitialized = false;
+  static bool _isInitializing = false;
 
   factory StorageService() {
     return _instance;
@@ -15,28 +17,40 @@ class StorageService {
   StorageService._internal();
 
   Future<void> init() async {
-    // Only initialize Hive once
-    if (!Hive.isAdapterRegistered(0)) {
-      await Hive.initFlutter();
-      Hive.registerAdapter(TransactionAdapter());
-      Hive.registerAdapter(BudgetAdapter());
+    if (_isInitialized) return;
+    if (_isInitializing) {
+      // Wait for ongoing initialization
+      while (_isInitializing) {
+        await Future.delayed(const Duration(milliseconds: 10));
+      }
+      return;
     }
 
-    // Try to open boxes if not already open
+    _isInitializing = true;
+
     try {
+      // Only initialize Hive once
+      if (!Hive.isAdapterRegistered(0)) {
+        await Hive.initFlutter();
+        Hive.registerAdapter(TransactionAdapter());
+        Hive.registerAdapter(BudgetAdapter());
+      }
+
+      // Try to open boxes if not already open
       if (!Hive.isBoxOpen(transactionBoxName)) {
         await Hive.openBox<Transaction>(transactionBoxName);
       }
-    } catch (e) {
-      // Ignore if already initialized elsewhere
-    }
 
-    try {
       if (!Hive.isBoxOpen(budgetBoxName)) {
         await Hive.openBox<Budget>(budgetBoxName);
       }
+
+      _isInitialized = true;
     } catch (e) {
-      // Ignore if already initialized elsewhere
+      // Silently handle errors - boxes might already be open
+      _isInitialized = true;
+    } finally {
+      _isInitializing = false;
     }
   }
 
@@ -47,9 +61,7 @@ class StorageService {
   }
 
   Future<List<Transaction>> getAllTransactions() async {
-    if (!Hive.isBoxOpen(transactionBoxName)) {
-      await init();
-    }
+    await init();
     final box = Hive.box<Transaction>(transactionBoxName);
     return box.values.toList();
   }
@@ -65,9 +77,7 @@ class StorageService {
   }
 
   Future<List<Transaction>> getRecentTransactions({int limit = 10}) async {
-    if (!Hive.isBoxOpen(transactionBoxName)) {
-      await init();
-    }
+    await init();
     final box = Hive.box<Transaction>(transactionBoxName);
     final transactions = box.values.toList();
     transactions.sort((a, b) => b.date.compareTo(a.date));
@@ -90,18 +100,14 @@ class StorageService {
   }
 
   Future<double> getTotalIncome() async {
-    if (!Hive.isBoxOpen(transactionBoxName)) {
-      await init();
-    }
+    await init();
     final box = Hive.box<Transaction>(transactionBoxName);
     final transactions = box.values.where((t) => t.type == 'income').toList();
     return transactions.fold<double>(0, (sum, t) => sum + t.amount);
   }
 
   Future<double> getTotalExpenses() async {
-    if (!Hive.isBoxOpen(transactionBoxName)) {
-      await init();
-    }
+    await init();
     final box = Hive.box<Transaction>(transactionBoxName);
     final transactions = box.values.where((t) => t.type == 'expense').toList();
     return transactions.fold<double>(0, (sum, t) => sum + t.amount);
@@ -120,17 +126,13 @@ class StorageService {
   }
 
   Future<List<Budget>> getAllBudgets() async {
-    if (!Hive.isBoxOpen(budgetBoxName)) {
-      await init();
-    }
+    await init();
     final box = Hive.box<Budget>(budgetBoxName);
     return box.values.toList();
   }
 
   Future<List<Budget>> getBudgetsForMonth(int month, int year) async {
-    if (!Hive.isBoxOpen(budgetBoxName)) {
-      await init();
-    }
+    await init();
     final box = Hive.box<Budget>(budgetBoxName);
     return box.values.where((b) => b.month == month && b.year == year).toList();
   }
@@ -163,9 +165,7 @@ class StorageService {
   }
 
   Future<Map<String, double>> getSpendingByCategory(int month, int year) async {
-    if (!Hive.isBoxOpen(transactionBoxName)) {
-      await init();
-    }
+    await init();
     final box = Hive.box<Transaction>(transactionBoxName);
     final transactions = box.values.where((t) {
       return t.type == 'expense' &&
