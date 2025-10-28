@@ -8,20 +8,39 @@ final budgetsProvider = FutureProvider<List<Budget>>((ref) async {
   return storageService.getAllBudgets();
 });
 
-final budgetsByMonthProvider = FutureProvider.family<List<Budget>, DateTime>((
-  ref,
-  date,
-) async {
-  final storageService = ref.read(storageServiceProvider);
-  try {
-    final budgets = await storageService.getBudgetsForMonth(
-      date.month,
-      date.year,
-    );
-    return budgets;
-  } catch (e) {
-    return <Budget>[]; // Return empty list on error
+class BudgetsByMonthNotifier extends StateNotifier<AsyncValue<List<Budget>>> {
+  final StorageService _storageService;
+
+  BudgetsByMonthNotifier(this._storageService)
+      : super(const AsyncValue.loading()) {
+    _loadBudgets();
   }
+
+  Future<void> _loadBudgets() async {
+    try {
+      final now = DateTime.now();
+      final budgets = await _storageService.getBudgetsForMonth(
+        now.month,
+        now.year,
+      );
+      state = AsyncValue.data(budgets);
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
+    }
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    await _loadBudgets();
+  }
+}
+
+final budgetsByMonthProvider =
+    StateNotifierProvider<BudgetsByMonthNotifier, AsyncValue<List<Budget>>>((
+  ref,
+) {
+  final storageService = ref.watch(storageServiceProvider);
+  return BudgetsByMonthNotifier(storageService);
 });
 
 final budgetStatusProvider =
@@ -95,10 +114,8 @@ class BudgetNotifier extends StateNotifier<AsyncValue<void>> {
   }
 
   void _invalidateProviders() {
-    _ref.invalidate(budgetsProvider);
-    _ref.invalidate(budgetsByMonthProvider(DateTime.now()));
-    _ref.invalidate(budgetStatusProvider(DateTime.now()));
-    _ref.invalidate(expenseByCategoryProvider(DateTime.now()));
+    // Refresh the budgets list
+    _ref.read(budgetsByMonthProvider.notifier).refresh();
   }
 }
 
