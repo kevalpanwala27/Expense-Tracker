@@ -17,8 +17,13 @@ class StorageService {
   StorageService._internal();
 
   Future<void> init() async {
-    if (_isInitialized) return;
+    print('StorageService.init() called'); // Debug
+    if (_isInitialized) {
+      print('Already initialized'); // Debug
+      return;
+    }
     if (_isInitializing) {
+      print('Waiting for ongoing initialization'); // Debug
       // Wait for ongoing initialization
       while (_isInitializing) {
         await Future.delayed(const Duration(milliseconds: 10));
@@ -26,11 +31,13 @@ class StorageService {
       return;
     }
 
+    print('Starting initialization'); // Debug
     _isInitializing = true;
 
     try {
       // Only initialize Hive once
       if (!Hive.isAdapterRegistered(0)) {
+        print('Initializing Hive and registering adapters'); // Debug
         await Hive.initFlutter();
         Hive.registerAdapter(TransactionAdapter());
         Hive.registerAdapter(BudgetAdapter());
@@ -38,15 +45,19 @@ class StorageService {
 
       // Try to open boxes if not already open
       if (!Hive.isBoxOpen(transactionBoxName)) {
+        print('Opening transaction box'); // Debug
         await Hive.openBox<Transaction>(transactionBoxName);
       }
 
       if (!Hive.isBoxOpen(budgetBoxName)) {
+        print('Opening budget box'); // Debug
         await Hive.openBox<Budget>(budgetBoxName);
       }
 
       _isInitialized = true;
+      print('Initialization complete'); // Debug
     } catch (e) {
+      print('Initialization error: $e'); // Debug
       // Silently handle errors - boxes might already be open
       _isInitialized = true;
     } finally {
@@ -134,7 +145,13 @@ class StorageService {
   Future<List<Budget>> getBudgetsForMonth(int month, int year) async {
     await init();
     final box = Hive.box<Budget>(budgetBoxName);
-    return box.values.where((b) => b.month == month && b.year == year).toList();
+    final budgets = box.values
+        .where((b) => b.month == month && b.year == year)
+        .toList();
+    print(
+      'getBudgetsForMonth: found ${budgets.length} budgets for $month/$year',
+    ); // Debug
+    return budgets;
   }
 
   Future<Budget?> getBudgetByCategory(
