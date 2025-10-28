@@ -32,6 +32,9 @@ class StorageService {
   }
 
   Future<List<Transaction>> getAllTransactions() async {
+    if (!Hive.isBoxOpen(transactionBoxName)) {
+      await init();
+    }
     final box = Hive.box<Transaction>(transactionBoxName);
     return box.values.toList();
   }
@@ -47,6 +50,9 @@ class StorageService {
   }
 
   Future<List<Transaction>> getRecentTransactions({int limit = 10}) async {
+    if (!Hive.isBoxOpen(transactionBoxName)) {
+      await init();
+    }
     final box = Hive.box<Transaction>(transactionBoxName);
     final transactions = box.values.toList();
     transactions.sort((a, b) => b.date.compareTo(a.date));
@@ -69,12 +75,18 @@ class StorageService {
   }
 
   Future<double> getTotalIncome() async {
+    if (!Hive.isBoxOpen(transactionBoxName)) {
+      await init();
+    }
     final box = Hive.box<Transaction>(transactionBoxName);
     final transactions = box.values.where((t) => t.type == 'income').toList();
     return transactions.fold<double>(0, (sum, t) => sum + t.amount);
   }
 
   Future<double> getTotalExpenses() async {
+    if (!Hive.isBoxOpen(transactionBoxName)) {
+      await init();
+    }
     final box = Hive.box<Transaction>(transactionBoxName);
     final transactions = box.values.where((t) => t.type == 'expense').toList();
     return transactions.fold<double>(0, (sum, t) => sum + t.amount);
@@ -93,11 +105,17 @@ class StorageService {
   }
 
   Future<List<Budget>> getAllBudgets() async {
+    if (!Hive.isBoxOpen(budgetBoxName)) {
+      await init();
+    }
     final box = Hive.box<Budget>(budgetBoxName);
     return box.values.toList();
   }
 
   Future<List<Budget>> getBudgetsForMonth(int month, int year) async {
+    if (!Hive.isBoxOpen(budgetBoxName)) {
+      await init();
+    }
     final box = Hive.box<Budget>(budgetBoxName);
     return box.values.where((b) => b.month == month && b.year == year).toList();
   }
@@ -130,6 +148,9 @@ class StorageService {
   }
 
   Future<Map<String, double>> getSpendingByCategory(int month, int year) async {
+    if (!Hive.isBoxOpen(transactionBoxName)) {
+      await init();
+    }
     final box = Hive.box<Transaction>(transactionBoxName);
     final transactions = box.values.where((t) {
       return t.type == 'expense' &&
