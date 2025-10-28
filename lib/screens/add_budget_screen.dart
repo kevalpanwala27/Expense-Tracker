@@ -151,7 +151,6 @@ class _AddBudgetScreenState extends ConsumerState<AddBudgetScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Budget Limit',
                   prefixIcon: Icon(Icons.currency_rupee),
-                  prefixText: '₹',
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {

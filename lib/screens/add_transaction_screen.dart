@@ -161,7 +161,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Amount',
                   prefixIcon: Icon(Icons.currency_rupee),
-                  prefixText: '₹',
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
