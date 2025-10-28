@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/balance_card.dart';
 import '../widgets/recent_transactions_widget.dart';
-import '../widgets/expense_chart.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -16,7 +15,6 @@ class DashboardScreen extends StatelessWidget {
             children: [
               BalanceCard(),
               SizedBox(height: 16),
-              ExpenseChart(),
               SizedBox(height: 16),
               RecentTransactionsWidget(),
               SizedBox(height: 80),

@@ -12,7 +12,7 @@ class BudgetsByMonthNotifier extends StateNotifier<AsyncValue<List<Budget>>> {
   final StorageService _storageService;
 
   BudgetsByMonthNotifier(this._storageService)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     _loadBudgets();
   }
 
@@ -37,11 +37,11 @@ class BudgetsByMonthNotifier extends StateNotifier<AsyncValue<List<Budget>>> {
 
 final budgetsByMonthProvider =
     StateNotifierProvider<BudgetsByMonthNotifier, AsyncValue<List<Budget>>>((
-  ref,
-) {
-  final storageService = ref.watch(storageServiceProvider);
-  return BudgetsByMonthNotifier(storageService);
-});
+      ref,
+    ) {
+      final storageService = ref.watch(storageServiceProvider);
+      return BudgetsByMonthNotifier(storageService);
+    });
 
 final budgetStatusProvider =
     FutureProvider.family<Map<String, double>, DateTime>((ref, date) async {

@@ -43,18 +43,50 @@ class _AddBudgetScreenState extends ConsumerState<AddBudgetScreen> {
   Future<void> _selectMonthYear() async {
     final now = DateTime.now();
     final nowCopy = now; // Use the variable to avoid lint warning
-    final picked = await showDialog<DateTime>(
+
+    // First show month picker
+    final selectedMonth = await showDialog<int>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Month & Year'),
+        title: const Text('Select Month'),
         content: SizedBox(
           width: 300,
-          child: YearPicker(
-            firstDate: DateTime(2020),
-            lastDate: DateTime(2030),
-            selectedDate: DateTime(_selectedYear, _selectedMonth),
-            onChanged: (date) {
-              Navigator.pop(context, date);
+          height: 300,
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              childAspectRatio: 2,
+            ),
+            itemCount: 12,
+            itemBuilder: (context, index) {
+              final month = index + 1;
+              final monthName = DateFormat('MMM').format(DateTime(2024, month));
+              final isSelected = month == _selectedMonth;
+
+              return InkWell(
+                onTap: () => Navigator.pop(context, month),
+                child: Container(
+                  margin: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Theme.of(context).primaryColor : null,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isSelected
+                          ? Theme.of(context).primaryColor
+                          : Colors.grey,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      monthName,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : null,
+                        fontWeight: isSelected ? FontWeight.bold : null,
+                      ),
+                    ),
+                  ),
+                ),
+              );
             },
           ),
         ),
@@ -66,12 +98,41 @@ class _AddBudgetScreenState extends ConsumerState<AddBudgetScreen> {
         ],
       ),
     );
+
+    if (selectedMonth == null) return;
+
+    // Then show year picker
+    final selectedYear = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Year'),
+        content: SizedBox(
+          width: 300,
+          height: 300,
+          child: YearPicker(
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2030),
+            selectedDate: DateTime(_selectedYear, selectedMonth),
+            onChanged: (date) {
+              Navigator.pop(context, date.year);
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
     final _ = nowCopy; // Suppress unused variable warning
 
-    if (picked != null) {
+    if (selectedYear != null) {
       setState(() {
-        _selectedMonth = picked.month;
-        _selectedYear = picked.year;
+        _selectedMonth = selectedMonth;
+        _selectedYear = selectedYear;
       });
     }
   }
