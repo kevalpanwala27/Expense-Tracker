@@ -15,29 +15,28 @@ class StorageService {
   StorageService._internal();
 
   Future<void> init() async {
-    try {
-      if (!Hive.isAdapterRegistered(0)) {
-        await Hive.initFlutter();
-        Hive.registerAdapter(TransactionAdapter());
-        Hive.registerAdapter(BudgetAdapter());
-      }
+    // Only initialize Hive once
+    if (!Hive.isAdapterRegistered(0)) {
+      await Hive.initFlutter();
+      Hive.registerAdapter(TransactionAdapter());
+      Hive.registerAdapter(BudgetAdapter());
+    }
 
+    // Try to open boxes if not already open
+    try {
       if (!Hive.isBoxOpen(transactionBoxName)) {
         await Hive.openBox<Transaction>(transactionBoxName);
       }
+    } catch (e) {
+      // Ignore if already initialized elsewhere
+    }
 
+    try {
       if (!Hive.isBoxOpen(budgetBoxName)) {
         await Hive.openBox<Budget>(budgetBoxName);
       }
     } catch (e) {
-      // Box might be open from previous session
-      // Try to ensure both boxes are available
-      if (!Hive.isBoxOpen(transactionBoxName)) {
-        await Hive.openBox<Transaction>(transactionBoxName);
-      }
-      if (!Hive.isBoxOpen(budgetBoxName)) {
-        await Hive.openBox<Budget>(budgetBoxName);
-      }
+      // Ignore if already initialized elsewhere
     }
   }
 
