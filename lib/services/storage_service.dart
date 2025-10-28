@@ -6,7 +6,18 @@ class StorageService {
   static const String transactionBoxName = 'transactions';
   static const String budgetBoxName = 'budgets';
 
+  static final StorageService _instance = StorageService._internal();
+
+  factory StorageService() {
+    return _instance;
+  }
+
+  StorageService._internal();
+
   Future<void> init() async {
+    if (Hive.isBoxOpen(transactionBoxName) && Hive.isBoxOpen(budgetBoxName)) {
+      return;
+    }
     await Hive.initFlutter();
     Hive.registerAdapter(TransactionAdapter());
     Hive.registerAdapter(BudgetAdapter());
