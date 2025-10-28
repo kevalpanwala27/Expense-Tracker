@@ -156,15 +156,30 @@ class BudgetsScreen extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(child: Text('Error: $error')),
+                error: (error, stack) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text('Error loading status: $error'),
+                  ),
+                ),
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(child: Text('Error: $error')),
+            error: (error, stack) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text('Error loading spending: $error'),
+              ),
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        error: (error, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('Error: $error'),
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
