@@ -6,12 +6,9 @@ final storageServiceProvider = Provider<StorageService>((ref) {
   return StorageService();
 });
 
-final transactionsProvider = StreamProvider<List<Transaction>>((ref) async* {
+final transactionsProvider = FutureProvider<List<Transaction>>((ref) async {
   final storageService = ref.read(storageServiceProvider);
-  yield* Stream.periodic(
-    const Duration(seconds: 1),
-    (_) => storageService.getAllTransactions(),
-  ).asyncMap((_) => storageService.getAllTransactions());
+  return storageService.getAllTransactions();
 });
 
 final recentTransactionsProvider = FutureProvider<List<Transaction>>((
@@ -50,8 +47,9 @@ final expenseByCategoryProvider =
 
 class TransactionNotifier extends StateNotifier<AsyncValue<void>> {
   final StorageService _storageService;
+  final Ref _ref;
 
-  TransactionNotifier(this._storageService)
+  TransactionNotifier(this._storageService, this._ref)
     : super(const AsyncValue.data(null));
 
   Future<void> addTransaction(Transaction transaction) async {
@@ -59,6 +57,7 @@ class TransactionNotifier extends StateNotifier<AsyncValue<void>> {
     try {
       await _storageService.addTransaction(transaction);
       state = const AsyncValue.data(null);
+      _invalidateProviders();
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
     }
@@ -69,6 +68,7 @@ class TransactionNotifier extends StateNotifier<AsyncValue<void>> {
     try {
       await _storageService.updateTransaction(transaction);
       state = const AsyncValue.data(null);
+      _invalidateProviders();
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
     }
@@ -79,14 +79,24 @@ class TransactionNotifier extends StateNotifier<AsyncValue<void>> {
     try {
       await _storageService.deleteTransaction(id);
       state = const AsyncValue.data(null);
+      _invalidateProviders();
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
     }
+  }
+
+  void _invalidateProviders() {
+    _ref.invalidate(transactionsProvider);
+    _ref.invalidate(recentTransactionsProvider);
+    _ref.invalidate(totalIncomeProvider);
+    _ref.invalidate(totalExpensesProvider);
+    _ref.invalidate(balanceProvider);
+    _ref.invalidate(expenseByCategoryProvider(DateTime.now()));
   }
 }
 
 final transactionNotifierProvider =
     StateNotifierProvider<TransactionNotifier, AsyncValue<void>>((ref) {
       final storageService = ref.watch(storageServiceProvider);
-      return TransactionNotifier(storageService);
+      return TransactionNotifier(storageService, ref);
     });

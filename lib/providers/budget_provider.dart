@@ -48,14 +48,17 @@ class BudgetQuery {
 
 class BudgetNotifier extends StateNotifier<AsyncValue<void>> {
   final StorageService _storageService;
+  final Ref _ref;
 
-  BudgetNotifier(this._storageService) : super(const AsyncValue.data(null));
+  BudgetNotifier(this._storageService, this._ref)
+    : super(const AsyncValue.data(null));
 
   Future<void> addBudget(Budget budget) async {
     state = const AsyncValue.loading();
     try {
       await _storageService.addBudget(budget);
       state = const AsyncValue.data(null);
+      _invalidateProviders();
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
     }
@@ -66,6 +69,7 @@ class BudgetNotifier extends StateNotifier<AsyncValue<void>> {
     try {
       await _storageService.updateBudget(budget);
       state = const AsyncValue.data(null);
+      _invalidateProviders();
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
     }
@@ -76,14 +80,22 @@ class BudgetNotifier extends StateNotifier<AsyncValue<void>> {
     try {
       await _storageService.deleteBudget(id);
       state = const AsyncValue.data(null);
+      _invalidateProviders();
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
     }
+  }
+
+  void _invalidateProviders() {
+    _ref.invalidate(budgetsProvider);
+    _ref.invalidate(budgetsByMonthProvider(DateTime.now()));
+    _ref.invalidate(budgetStatusProvider(DateTime.now()));
+    _ref.invalidate(expenseByCategoryProvider(DateTime.now()));
   }
 }
 
 final budgetNotifierProvider =
     StateNotifierProvider<BudgetNotifier, AsyncValue<void>>((ref) {
       final storageService = ref.watch(storageServiceProvider);
-      return BudgetNotifier(storageService);
+      return BudgetNotifier(storageService, ref);
     });
